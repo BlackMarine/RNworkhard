@@ -33,12 +33,8 @@ export default function App() {
   // 설명: Object.assign({}, toDos, {[Date.now()]:{work:true}}); 이런식으로 객체에 추가로 넣을 수 있어서 객체를 사용함
   // toDos를 변경시키는 것이 아니라 새로운 toDos를 이용해서 변경함
 
-  const travel = async() => {
-    setWorking(false);
-  };
-  const work = async() => {
-    setWorking(true);
-  };
+  const travel = () => setWorking(false);
+  const work = () => setWorking(true);
   const onChangeText = (payload) => setText(payload);
 
   //set아이템
