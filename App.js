@@ -11,7 +11,10 @@ import {
   ScrollView, //#3.4 텍스트입력시 보이도록하기
 } from "react-native";
 import { theme } from "./color";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true); //#3.2
@@ -24,7 +27,25 @@ export default function App() {
   const work = () => setWorking(true);
   const onChangeText = (payload) => setText(payload);
 
-  const addToDo = () => {
+  //set아이템
+  const saveToDos = async (toSave) => {
+    //async storage에 데이터를 저장함
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+  }
+  //get아이템
+  const loadToDos = async () => {
+    const s = await AsyncStorage.getItem(STORAGE_KEY);
+    //console.log(s);
+    //console.log(JSON.parse(s));
+    setToDos(JSON.parse(s));
+  }
+  //마운트될 때 load하게끔 
+  useEffect(() => {
+    loadToDos(); //저장이됨!!
+  }, []);
+
+
+  const addToDo = async () => {
     alert(text);
     if (text === "") {
       return;
@@ -38,6 +59,7 @@ export default function App() {
       [Date.now()]: { text, working },
     };
     setToDos(newToDos);
+    await saveToDos(newToDos);
     setText("");
   };
 
