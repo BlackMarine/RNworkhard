@@ -17,6 +17,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AntDesign } from '@expo/vector-icons';  //휴지통아이콘
 const STORAGE_KEY = "@toDos";
 
+
+
+
+
+
+
+
+
+
 export default function App() {
   const [working, setWorking] = useState(true); //#3.2
   const [text, setText] = useState(""); //기본값""주고 유저가 입력하면 payload 저장
@@ -24,8 +33,12 @@ export default function App() {
   // 설명: Object.assign({}, toDos, {[Date.now()]:{work:true}}); 이런식으로 객체에 추가로 넣을 수 있어서 객체를 사용함
   // toDos를 변경시키는 것이 아니라 새로운 toDos를 이용해서 변경함
 
-  const travel = () => setWorking(false);
-  const work = () => setWorking(true);
+  const travel = async() => {
+    setWorking(false);
+  };
+  const work = async() => {
+    setWorking(true);
+  };
   const onChangeText = (payload) => setText(payload);
 
   //set아이템
@@ -44,6 +57,14 @@ export default function App() {
   useEffect(() => {
     loadToDos(); //저장이됨!!
   }, []);
+
+
+
+
+
+
+
+
 
 
   const addToDo = async () => {
@@ -77,6 +98,12 @@ export default function App() {
       }}
     ]);
   }
+
+
+
+
+
+
 
   return (
     <View style={styles.container}>
@@ -131,6 +158,12 @@ export default function App() {
     </View>
   );
 }
+
+
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -194,4 +227,20 @@ style
 input
 
 
+*/
+
+/*
+코드챌린지
+1. async이용해서 마지막 저장 단계 탭으로 이동해서 시작하기
+내가 어딨는지 기억해
+
+2. toDo list 펑션만들고 ----보이도록해
+아이콘을 추가하고 완료했으면 --------찍 그어서 놓고 finish true false이런식
+function 하나만들고 key값으로 toDo를 찾고 수정해서 done:true false구분
+새로수정된toTo를 state에 저장해야겠지? 
+function state를 mutate하면 안댐 async storeage를 써야함 
+
+3. toDo를 완료로 둘 수 있으면 수정할 수 있도록 해보기
+todo의 완료표시를 할 수 있다면 완료 수정 삭제 
+ 
 */
