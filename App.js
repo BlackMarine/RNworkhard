@@ -1,3 +1,5 @@
+
+import Checkbox from 'expo-checkbox';
 import { StatusBar } from "expo-status-bar";
 import {
   StyleSheet,
@@ -10,6 +12,9 @@ import {
   // 1)텍스트 인풋 import 2)<TextInput> 추가
   ScrollView,
   Alert, //#3.4 텍스트입력시 보이도록하기
+  Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { theme } from "./color";
 import React, { useEffect, useState } from "react";
@@ -25,17 +30,25 @@ const STORAGE_KEY = "@toDos";
 
 
 
-
 export default function App() {
   const [working, setWorking] = useState(true); //#3.2
   const [text, setText] = useState(""); //기본값""주고 유저가 입력하면 payload 저장
   const [toDos, setToDos] = useState({}); // 배열[] 객체{} 넣기 배열대신 {} 넣음
   // 설명: Object.assign({}, toDos, {[Date.now()]:{work:true}}); 이런식으로 객체에 추가로 넣을 수 있어서 객체를 사용함
   // toDos를 변경시키는 것이 아니라 새로운 toDos를 이용해서 변경함
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [workTravelTap, setWorkTravelTap] = useState(true);
+  
+  const [isChecked, setChecked] = useState(false); //체크박스
+
+  console.log(workTravelTap);
+
 
   const travel = () => setWorking(false);
   const work = () => setWorking(true);
   const onChangeText = (payload) => setText(payload);
+  
 
   //set아이템
   const saveToDos = async (toSave) => {
@@ -47,7 +60,9 @@ export default function App() {
     const s = await AsyncStorage.getItem(STORAGE_KEY);
     //console.log(s);
     //console.log(JSON.parse(s));
-    setToDos(JSON.parse(s));
+    if(s){
+      setToDos(JSON.parse(s));
+    }
   }
   //마운트될 때 load하게끔 
   useEffect(() => {
@@ -74,7 +89,7 @@ export default function App() {
     // });
     const newToDos = {
       ...toDos,
-      [Date.now()]: { text, working },
+      [Date.now()]: { text, working, isChecked },
     };
     setToDos(newToDos);
     await saveToDos(newToDos);
@@ -84,20 +99,34 @@ export default function App() {
   console.log(toDos);
 
   const deleteToDo = (key) => {
-    Alert.alert("삭제할거야?", "진짜로?",[
-      {text:"취소"},
-      {text:"삭제", onPress: async() => {
+    if(Platform.OS === "web"){
+      const ok = confirm("Do you want to delete this To Do?")
+      if(ok){
         const newToDos = {...toDos} //mutating state는 mutate하면안됨
         delete newToDos[key] //새롭게 만들어줌
         setToDos(newToDos); //update the state
         saveToDos(newToDos); //save that action 
-      }}
-    ]);
+      }
+    } else {
+      Alert.alert("삭제할거야?", "진짜로?",[
+        {text:"취소"},
+        {text:"삭제", onPress: async() => {
+          const newToDos = {...toDos} //mutating state는 mutate하면안됨
+          delete newToDos[key] //새롭게 만들어줌
+          setToDos(newToDos); //update the state
+          saveToDos(newToDos); //save that action 
+        }}
+      ]);
+    }
   }
-
-
-
-
+  const editToDoChk = async(key) => {
+    // Alert.alert("수정하기");
+    console.log("체크박스 수정함수 실행");
+    const newToDos = {...toDos} 
+    //delete newToDos[key] 객체값수정
+    // setToDos(newToDos);
+    // saveToDos(newToDos);
+  }
 
 
 
@@ -108,7 +137,9 @@ export default function App() {
       <View style={styles.header}>
         <TouchableOpacity onPress={work}>
           <Text
-            style={{ ...styles.btnText, color: working ? "red" : theme.grey }}
+            style={{ 
+              fontSize: 34,
+              fontWeight: "600", color: working ? "red" : theme.grey }}
           >
             Work
           </Text>
@@ -117,7 +148,8 @@ export default function App() {
         <TouchableOpacity onPress={travel}>
           <Text
             style={{
-              ...styles.btnText,
+              fontSize: 34,
+              fontWeight: "600",
               color: !working ? "white" : theme.grey,
             }}
           >
@@ -141,17 +173,58 @@ export default function App() {
           */}
         </TextInput>
       </View>
+      
       <ScrollView styles="qweqwe">
         {Object.keys(toDos).map((key) => (
           toDos[key].working === working ? <View style={styles.toDo} key={key}>
-            <Text style={styles.toDoText}>{toDos[key].text}</Text>
-            <TouchableOpacity onPress={() => deleteToDo(key)}>
-              <AntDesign name="delete" size={18} color={theme.grey} />
+
+            {/* 체크박스 */}
+            <Checkbox
+              style={styles.checkbox}
+              value={isChecked}
+              onValueChange={setChecked}
+              onPress={editToDoChk()}
+              color={isChecked ? '#4630EB' : "red"}
+            />
+            
+            <Text style={toDos[key].done === true ? styles.toDoText : styles.toDoTextLineThrough}>{toDos[key].text}</Text>
+
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <AntDesign name="edit" size={18} color="white" />
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => deleteToDo(key)}>
+              <AntDesign name="delete" size={18} color="white" />
+            </TouchableOpacity>
+
           </View> : null
         ))}
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Hello World!</Text>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.textStyle}>Hide Modal</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
     </View>
+
   );
 }
 
@@ -203,6 +276,60 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  toDoTextLineThrough: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textDecorationLine: "line-through",
+  },
+
+
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2
+  },
+  buttonOpen: {
+    backgroundColor: "#F194FF",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center"
+  },
+
+  checkbox: {
+    margin: 8,
   },
 });
 
